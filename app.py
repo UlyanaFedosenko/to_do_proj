@@ -76,18 +76,9 @@ def get_all_tasks():
     offset = (page - 1) * page_size
     tasks = session.query(Task).offset(offset).limit(page_size).all()
 
-    result = []
-    for task in tasks:
-        task_data = {
-            'id': task.id,
-            'title': task.title,
-            'description': task.description,
-            'status': task.status.value,
-            'user_id': task.user_id
-        }
-        result.append(task_data)
-
-    return jsonify(result), 200
+    tasks_data = [TaskSchema.from_orm(task) for task in tasks]
+    tasks_json = [task.dict() for task in tasks_data]
+    return jsonify(tasks_json), 200
 
 
 @app.route('/tasks/<int:user_id>', methods=['GET'])
@@ -131,7 +122,6 @@ def update_task(task_id):
     if 'description' in data:
         task.description = data['description']
     if 'status' in data:
-        # Check if the provided status is a valid enum value
         if data['status'] not in [status.value for status in Status]:
             return jsonify({'message': 'Invalid status value'}), 400
         else:
