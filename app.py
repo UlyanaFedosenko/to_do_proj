@@ -13,6 +13,16 @@ app.secret_key = 'secret_key'
 jwt = JWTManager(app)
 
 
+def user_check(task_id):
+    user_id = get_jwt_identity()
+    task = session.get(Task, task_id)
+    if not task:
+        return jsonify({'message': 'Task not found'}), 404
+    if task.user_id != user_id:
+        return jsonify({'message': 'Unauthorized'}), 401
+    return task
+
+
 @app.route('/register', methods=['POST'])
 def register():
     data = request.json
@@ -108,14 +118,7 @@ def get_task(task_id):
 @app.route('/tasks/<int:task_id>', methods=['PUT'])
 @jwt_required()
 def update_task(task_id):
-    user_id = get_jwt_identity()
-
-    task = session.get(Task, task_id)
-    if not task:
-        return jsonify({'message': 'Task not found'}), 404
-    if task.user_id != user_id:
-        return jsonify({'message': 'Unauthorized'}), 401
-
+    task = user_check(task_id)
     data = request.json
     if 'title' in data:
         task.title = data['title']
@@ -134,20 +137,44 @@ def update_task(task_id):
 @app.route('/tasks/<int:task_id>', methods=['DELETE'])
 @jwt_required()
 def delete_task(task_id):
-    user_id = get_jwt_identity()
-    task = session.get(Task, task_id)
-    if not task:
-        return jsonify({'message': 'Task not found'}), 404
-    if task.user_id != user_id:
-        return jsonify({'message': 'Unauthorized'}), 401
+    task = user_check(task_id)
     session.delete(task)
     session.commit()
     return jsonify({'message': 'Task deleted successfully'}), 200
 
 
+@app.route('/tasks/<int:task_id>/complete', methods=['PATCH'])
+@jwt_required()
+def mark_task_completed(task_id):
+    task = user_check(task_id)
+    task.status = Status.completed
+    session.commit()
+    return jsonify({'message': 'Task marked as completed.'}), 200
+
+
+@app.route('/tasks/', methods=['GET'])
+@jwt_required()
+def get_filtered_tasks():
+    status = request.args.get('status')
+    if not status:
+        return jsonify({'error': 'Status parameter is required'}), 400
+    else:
+        status = status.upper()
+        if status not in [status.value for status in Status]:
+            return jsonify({'message': 'Invalid status value'}), 400
+        else:
+            tasks = session.query(Task).filter_by(status=Status.__call__(status)).all()
+            tasks_data = [TaskSchema.from_orm(task) for task in tasks]
+            tasks_json = [task.dict() for task in tasks_data]
+            if not tasks_json:
+                return jsonify({'message': 'There are no tasks in this status'}), 400
+            return jsonify(tasks_json), 200
+
+
 @app.before_request
 def add_token_to_header():
-    if request.endpoint in ('create_task', 'delete_task', 'get_all_tasks', 'get_user_tasks', 'get_task', 'update_task'):
+    if (request.endpoint in
+    ('create_task', 'delete_task', 'get_all_tasks', 'get_user_tasks', 'get_task', 'update_task', 'mark_task_completed', 'get_filtered_tasks')):
         access_token = flask_session.get('access_token')
         request.environ['HTTP_AUTHORIZATION'] = f'Bearer {access_token}'
 
