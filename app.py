@@ -71,10 +71,23 @@ def create_task():
 @app.route('/tasks', methods=['GET'])
 @jwt_required()
 def get_all_tasks():
-    tasks = session.query(Task).all()
-    tasks_data = [TaskSchema.from_orm(task) for task in tasks]
-    tasks_json = [task.dict() for task in tasks_data]
-    return jsonify(tasks_json), 200
+    page = request.args.get('page', default=1, type=int)
+    page_size = request.args.get('page_size', default=10, type=int)
+    offset = (page - 1) * page_size
+    tasks = session.query(Task).offset(offset).limit(page_size).all()
+
+    result = []
+    for task in tasks:
+        task_data = {
+            'id': task.id,
+            'title': task.title,
+            'description': task.description,
+            'status': task.status.value,
+            'user_id': task.user_id
+        }
+        result.append(task_data)
+
+    return jsonify(result), 200
 
 
 @app.route('/tasks/<int:user_id>', methods=['GET'])
