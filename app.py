@@ -71,7 +71,11 @@ def create_task():
 @app.route('/tasks', methods=['GET'])
 @jwt_required()
 def get_all_tasks():
-    tasks = session.query(Task).all()
+    page = request.args.get('page', default=1, type=int)
+    page_size = request.args.get('page_size', default=10, type=int)
+    offset = (page - 1) * page_size
+    tasks = session.query(Task).offset(offset).limit(page_size).all()
+
     tasks_data = [TaskSchema.from_orm(task) for task in tasks]
     tasks_json = [task.dict() for task in tasks_data]
     return jsonify(tasks_json), 200
@@ -118,7 +122,6 @@ def update_task(task_id):
     if 'description' in data:
         task.description = data['description']
     if 'status' in data:
-        # Check if the provided status is a valid enum value
         if data['status'] not in [status.value for status in Status]:
             return jsonify({'message': 'Invalid status value'}), 400
         else:
