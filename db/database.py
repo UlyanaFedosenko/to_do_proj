@@ -9,6 +9,8 @@ DATABASE_URL = settings
 
 engine = create_engine(str(DATABASE_URL.pg_dsn))
 
-session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+session = Session()
+
 
 Base = declarative_base()
