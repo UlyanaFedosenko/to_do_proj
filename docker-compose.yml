@@ -37,4 +37,14 @@ services:
       - variables.env
     depends_on:
       - migrations
+  unit-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: tests
+    restart: on-failure
+    depends_on:
+      - server
+      - migrations
+
 

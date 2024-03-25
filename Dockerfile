@@ -15,3 +15,7 @@ FROM base AS server
 COPY app.py ./
 
 CMD ["python", "app.py"]
+
+FROM base AS tests
+COPY tests ./tests
+CMD [ "python", "-m", "unittest", "tests/unittests.py" ]
