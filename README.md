@@ -18,11 +18,12 @@ Befor running the bot, ensure you have the following installed:
         docker build -t to-do-app .  
 
 
-## Running the Bot
-Run the Docker container with the following comand:
+## Running the Server
+Run the Docker-compose with the following comand:
 
-    docker run to-do-app
+    docker-compose up
 
+use the following address - http://0.0.0.0:5002/
 
 ## API Endpoints
 1. User Registration
