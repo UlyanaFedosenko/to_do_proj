@@ -3,7 +3,8 @@ from flask import Flask, request, jsonify
 from flask import session as flask_session
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 from sqlalchemy.exc import IntegrityError
-from db.models import User, Task, session, Status
+from db.database import session
+from db.models import User, Task, Status
 from db.schema import Task as TaskSchema
 
 
@@ -180,4 +181,4 @@ def add_token_to_header():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=5002)

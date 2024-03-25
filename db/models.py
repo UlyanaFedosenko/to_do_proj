@@ -2,24 +2,8 @@ import enum
 
 from sqlalchemy import Column, Enum, Integer, ForeignKey, Text, VARCHAR
 from sqlalchemy.orm import relationship, validates
-from werkzeug.security import generate_password_hash
 
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-
-from config import settings
-
-
-DATABASE_URL = settings
-
-engine = create_engine(str(DATABASE_URL.pg_dsn))
-
-Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-session = Session()
-
-
-Base = declarative_base()
+from db.database import Base
 
 
 class Status(enum.Enum):

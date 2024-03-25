@@ -1,0 +1,40 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:15.2
+    ports:
+      - 5432:5432
+    restart: unless-stopped
+    env_file:
+      - variables.env
+    healthcheck:
+        test:  [ "CMD", "pg_isready", "-q", "-d", "to_do_list", "-U", "postgres" ]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+  migrations:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migration
+    env_file:
+      - variables.env
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: server
+    ports:
+      - 5002:5002
+    restart: always
+    env_file:
+      - variables.env
+    depends_on:
+      - migrations
+
